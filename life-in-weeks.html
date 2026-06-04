@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life in Weeks — Poster Generator</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0e0e0e;min-height:100vh;font-family:-apple-system,'Helvetica Neue',Arial,sans-serif}
+
+    #s-setup{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;padding:44px 40px;width:100%;max-width:380px}
+    .card-ttl{font-size:.68rem;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:#eee;margin-bottom:5px}
+    .card-sub{font-size:.78rem;color:#4a4a4a;line-height:1.6;margin-bottom:36px}
+    .f+.f{margin-top:16px}
+    .f label{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.16em;color:#5a5a5a;margin-bottom:6px}
+    .f input{width:100%;background:#222;border:1px solid #333;border-radius:7px;padding:10px 13px;font-size:.92rem;color:#ddd;outline:none;transition:border-color .15s;color-scheme:dark}
+    .f input:focus{border-color:#666}
+    .btn-gen{display:block;width:100%;margin-top:30px;background:#ebebeb;color:#111;border:none;border-radius:7px;padding:13px;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:background .15s}
+    .btn-gen:hover{background:#fff}
+
+    #s-ctrl{display:none;background:#141414;border-bottom:1px solid #252525;padding:11px 22px;position:sticky;top:0;z-index:20;align-items:center;gap:10px}
+    #s-ctrl .lbl{flex:1;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:#444}
+    #s-ctrl .tip{font-size:.6rem;color:#444;letter-spacing:.04em}
+    .btn-bk{background:transparent;border:1px solid #2e2e2e;border-radius:5px;padding:7px 14px;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#555;cursor:pointer;transition:all .15s}
+    .btn-bk:hover{border-color:#555;color:#bbb}
+    .btn-pr{background:#ebebeb;border:none;border-radius:5px;padding:7px 18px;font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#111;cursor:pointer;transition:background .15s}
+    .btn-pr:hover{background:#fff}
+
+    #s-post{display:none;padding:28px 16px 48px}
+    #svg-post{display:block;width:100%;max-width:880px;margin:0 auto;background:white;box-shadow:0 16px 70px rgba(0,0,0,.75);border-radius:3px}
+
+    @media print{
+      body,#s-post{background:white!important}
+      #s-setup,#s-ctrl{display:none!important}
+      #s-post{display:block!important;padding:0!important}
+      #svg-post{width:297mm!important;height:420mm!important;max-width:none!important;box-shadow:none!important;border-radius:0!important}
+      @page{size:A3 portrait;margin:0}
+    }
+  </style>
+</head>
+<body>
+
+<div id="s-setup">
+  <div class="card">
+    <div class="card-ttl">Life in Weeks</div>
+    <div class="card-sub">Enter your details to generate<br>a printable A3 wall poster</div>
+    <form id="f-setup" onsubmit="event.preventDefault();gen()">
+      <div class="f"><label for="i-name">Your Name</label><input type="text" id="i-name" placeholder="First Last" autocomplete="name"></div>
+      <div class="f"><label for="i-dob">Date of Birth</label><input type="date" id="i-dob" required></div>
+      <div class="f"><label for="i-ls">Projected Lifespan (years)</label><input type="number" id="i-ls" value="80" min="60" max="100"></div>
+      <button type="submit" class="btn-gen">Generate Poster →</button>
+    </form>
+  </div>
+</div>
+
+<div id="s-ctrl">
+  <span class="lbl">Print Preview — A3 Portrait</span>
+  <span class="tip">Print dialog → A3 · Actual Size · Save as PDF</span>
+  <button type="button" class="btn-bk" onclick="back()">← Edit</button>
+  <button type="button" class="btn-pr" onclick="window.print()">Print / Save PDF</button>
+</div>
+
+<div id="s-post">
+  <svg id="svg-post" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 297 420" aria-label="Life in weeks poster"></svg>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmtD=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+
+(function init(){
+  const dob=$('i-dob');
+  const today=new Date().toISOString().slice(0,10);
+  dob.max=today;
+  dob.value='1990-01-01';
+})();
+
+function gen(){
+  const name=($('i-name').value||'').trim();
+  const dobStr=$('i-dob').value;
+  const ls=Math.max(60,Math.min(100,parseInt($('i-ls').value,10)||80));
+  if(!dobStr){alert('Please enter your date of birth.');return;}
+
+  const dob=new Date(dobStr+'T12:00:00');
+  const today=new Date();
+  const MSW=7*24*3600*1000;
+  const totalW=ls*52;
+  const livedW=Math.max(0,Math.min(totalW,Math.floor((today-dob)/MSW)));
+
+  const PW=297,PH=420,ML=13,MR=13,MT=13;
+  const RULE1=MT+22;
+  const RULE2=PH-13-12;
+  const GRID_Y=RULE1+3.5;
+  const GRID_H=RULE2-3.5-GRID_Y;
+  const YL_W=9,YL_GAP=1.5;
+  const DX0=ML+YL_W+YL_GAP;
+  const DW=PW-MR-DX0;
+  const CW=DW/52;
+  const CH=GRID_H/ls;
+  const DR=Math.min(CW,CH)*0.31;
+  const F="'Helvetica Neue',Helvetica,Arial,sans-serif";
+
+  const p=[];
+  const w=s=>p.push(s);
+
+  w(`<rect width="${PW}" height="${PH}" fill="white"/>`);
+  w(`<rect x=".4" y=".4" width="${PW-.8}" height="${PH-.8}" fill="none" stroke="#efefef" stroke-width=".3"/>`);
+
+  w(`<text x="${ML}" y="${MT+13}" font-family="${F}" font-size="14" font-weight="800" fill="#0a0a0a" letter-spacing="-.3">LIFE IN WEEKS</text>`);
+  w(`<text x="${ML}" y="${MT+20}" font-family="${F}" font-size="3.1" font-weight="300" fill="#b8b8b8" letter-spacing="1.1">EVERY DOT IS ONE WEEK OF A HUMAN LIFE</text>`);
+  w(`<text x="${PW-MR}" y="${MT+12}" font-family="${F}" font-size="7.5" font-weight="300" fill="#0a0a0a" text-anchor="end" letter-spacing=".1">${esc(name||'A Human Life')}</text>`);
+  w(`<text x="${PW-MR}" y="${MT+20}" font-family="${F}" font-size="3.1" font-weight="300" fill="#b8b8b8" text-anchor="end" letter-spacing=".3">BORN ${esc(fmtD(dob))}</text>`);
+
+  w(`<line x1="${ML}" y1="${RULE1}" x2="${PW-MR}" y2="${RULE1}" stroke="#0a0a0a" stroke-width=".35"/>`);
+  w(`<line x1="${ML}" y1="${RULE2}" x2="${PW-MR}" y2="${RULE2}" stroke="#0a0a0a" stroke-width=".35"/>`);
+
+  const GHY=GRID_Y-1;
+  w(`<text x="${ML+YL_W-.5}" y="${GHY}" font-family="${F}" font-size="2.1" fill="#ccc" text-anchor="end">YEAR</text>`);
+  [[0,'1'],[12,'13'],[25,'26'],[38,'39'],[51,'52']].forEach(([col,lbl])=>{
+    w(`<text x="${DX0+col*CW+CW*.5}" y="${GHY}" font-family="${F}" font-size="2.1" fill="#ccc" text-anchor="middle">${lbl}</text>`);
+  });
+
+  [13,26,39].forEach(q=>{
+    const lx=DX0+q*CW;
+    w(`<line x1="${lx}" y1="${GRID_Y}" x2="${lx}" y2="${GRID_Y+GRID_H}" stroke="#f2f2f2" stroke-width=".2"/>`);
+  });
+
+  for(let y=0;y<ls;y++){
+    const cy=GRID_Y+y*CH+CH*.5;
+    if(y%5===0){
+      const dec=y%10===0;
+      w(`<text x="${ML+YL_W-.5}" y="${cy+1.3}" font-family="${F}" font-size="${dec?3.5:2.8}" font-weight="${dec?700:400}" fill="${dec?'#3a3a3a':'#c0c0c0'}" text-anchor="end">${y}</text>`);
+    }
+    for(let wk=0;wk<52;wk++){
+      const wi=y*52+wk;
+      const cx=DX0+wk*CW+CW*.5;
+      if(wi<=livedW){
+        w(`<circle cx="${cx}" cy="${cy}" r="${DR}" fill="#111"/>`);
+      } else {
+        w(`<circle cx="${cx}" cy="${cy}" r="${DR}" fill="none" stroke="#dcdcdc" stroke-width=".28"/>`);
+      }
+    }
+  }
+
+  const FY=RULE2+3;
+  const legs=[
+    {fill:true,  col:'#111', lbl:'WEEKS LIVED'},
+    {fill:false, col:'#ccc', lbl:'WEEKS AHEAD'},
+  ];
+  let lx=ML;
+  legs.forEach(it=>{
+    const r=2.2, ly=FY+6;
+    if(it.fill) w(`<circle cx="${lx+r}" cy="${ly}" r="${r}" fill="${it.col}"/>`);
+    else        w(`<circle cx="${lx+r}" cy="${ly}" r="${r}" fill="none" stroke="${it.col}" stroke-width=".4"/>`);
+    w(`<text x="${lx+r*2+1.8}" y="${ly+1.4}" font-family="${F}" font-size="2.8" fill="#888" letter-spacing=".2">${it.lbl}</text>`);
+    lx+=r*2+28;
+  });
+
+  $('svg-post').innerHTML=p.join('');
+  $('s-setup').style.display='none';
+  $('s-ctrl').style.display='flex';
+  $('s-post').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function back(){
+  $('s-setup').style.display='flex';
+  $('s-ctrl').style.display='none';
+  $('s-post').style.display='none';
+}
+</script>
+</body>
+</html>
